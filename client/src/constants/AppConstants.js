@@ -1,0 +1,4 @@
+export default {
+  APP_INITIALIZED: 'APP_INITIALIZED',
+  LOGGED_IN: 'LOGGED_IN',
+};
