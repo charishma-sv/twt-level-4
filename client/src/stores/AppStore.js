@@ -1,66 +1,56 @@
+import AppDispatcher from '../dispatcher/AppDispatcher';
 import { EventEmitter } from 'events';
 import AppConstants from '../constants/AppConstants';
-import AppDispatcher from '../dispatcher/AppDispatcher';
 
-const APP_CHANGE_EVENT = 'APP_CHANGE_EVENT';
+let _loggedIn = false;
+
 class AppStore extends EventEmitter {
   constructor() {
     super();
-    this.appAuthData = {};
-    this.appProfileData = {};
+    this.dispatchToken = AppDispatcher.register(
+      this.dispatcherCallback.bind(this)
+    );
   }
 
-  setAppAuthData(data) {
-    this.appAuthData = data;
-    this.emitChange();
+  emitChange(eventName) {
+    this.emit(eventName);
   }
 
-  setAppProfileData(data) {
-    this.appProfileData = data;
-    this.emitChange();
+  getStatus() {
+    return _loggedIn;
   }
 
-  get loggedIn() {
-    if (!this.appAuthData) {
-      return;
+  init_app(status) {
+    _loggedIn = false;
+  }
+
+  logged_in(status) {
+    _loggedIn = true;
+    console.log('_loggedin', _loggedIn);
+  }
+
+  addChangeListener(eventName, callback) {
+    this.on(eventName, callback);
+  }
+
+  removeChangeListener(eventName, callback) {
+    this.removeListener(eventName, callback);
+  }
+
+  dispatcherCallback(action) {
+    switch (action.actionType) {
+      case AppConstants.APP_INITIALIZED:
+        this.init_app(action.payload);
+        break;
+      case AppConstants.LOGGED_IN:
+        this.logged_in(action.payload);
+        break;
     }
 
-    return this.appAuthData.status == 'connected';
-  }
+    this.emitChange('APP_CHANGE_EVENT');
 
-  addChangeListener(callback) {
-    this.on(APP_CHANGE_EVENT, callback);
-  }
-
-  removeChangeListener(callback) {
-    this.removeListener(APP_CHANGE_EVENT, callback);
-  }
-
-  emitChange() {
-    this.emit(APP_CHANGE_EVENT);
-  }
-
-  userProfileData() {
-    return this.appProfileData;
+    return true;
   }
 }
 
-const store = new AppStore();
-store.dispatchToken = AppDispatcher.register((action) => {
-  switch (action.actionType) {
-    case AppConstants.APP_INITIALIZED:
-      store.setAppAuthData(action.payload);
-      store.emitChange();
-      console.log('status in initialized', action.payload);
-      break;
-    case AppConstants.LOGGED_IN:
-      store.setAppAuthData(action.payload);
-      store.setAppProfileData(action.payload);
-      store.emitChange();
-      console.log('emmited change in looged in', action.payload);
-      break;
-    default:
-  }
-});
-
-export default store;
+export default new AppStore();

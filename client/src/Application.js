@@ -6,19 +6,18 @@ import AppActions from './actions/AppActions';
 import Login from './views/pages/Login';
 
 function Application() {
-  //why getAppState is not hoisted? - got error when useState staement placed before getAppState
-  const getAppState = () => ({
-    loggedIn: appStore.loggedIn,
-    userProfile: appStore.userProfileData(),
-  });
   const [appState, setAppState] = React.useState(getAppState());
-
+  function getAppState() {
+    return {
+      loggedInStatus: appStore.getStatus(),
+    };
+  }
   useEffect(() => {
     AppActions.initApp();
-    appStore.addChangeListener(() => onAppChange);
+    appStore.addChangeListener('APP_CHANGE_EVENT', onAppChange);
     console.log('appstate', appState);
-    return () => appStore.removeChangeListener(onAppChange);
-  }, [appState]);
+    return () => appStore.removeChangeListener('APP_CHANGE_EVENT', onAppChange);
+  }, []);
 
   function onAppChange() {
     console.log('inside on app change');
@@ -28,7 +27,7 @@ function Application() {
   return (
     <div className="text-center">
       Application
-      {!appState.loggedIn ? <Home /> : <Feed />}
+      {!appState.loggedInStatus ? <Login /> : <Feed />}
     </div>
   );
 }
